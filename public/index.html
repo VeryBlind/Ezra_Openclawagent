@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenClaw Agent</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap');
+ 
+  :root {
+    --bg: #0e0e0f;
+    --surface: #17171a;
+    --surface2: #1f1f24;
+    --border: #2a2a30;
+    --border2: #38383f;
+    --text: #e8e8ec;
+    --muted: #888890;
+    --faint: #444450;
+    --accent: #c8a96e;
+    --accent-dim: #8a7248;
+    --accent-bg: #1e1a12;
+    --user-bg: #1a1f2e;
+    --user-border: #2a3550;
+    --danger: #c85a5a;
+    --success: #5aaa80;
+    --warning: #c8a040;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+ 
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+ 
+  body {
+    font-family: 'Instrument Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+ 
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    flex-shrink: 0;
+  }
+ 
+  .logo { display: flex; align-items: center; gap: 10px; }
+  .logo-mark {
+    width: 32px; height: 32px;
+    background: var(--accent-bg);
+    border: 1px solid var(--accent-dim);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'DM Serif Display', serif;
+    font-size: 16px;
+    color: var(--accent);
+  }
+  .logo-text { font-family: 'DM Serif Display', serif; font-size: 18px; }
+ 
+  .profession-tag {
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    color: var(--accent);
+    background: var(--accent-bg);
+    border: 1px solid var(--accent-dim);
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+ 
+  .header-right { display: flex; align-items: center; gap: 12px; }
+ 
+  .google-badge {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid;
+    cursor: default;
+  }
+  .google-badge.connected {
+    color: var(--success);
+    border-color: #2a5a3a;
+    background: #0d1f14;
+  }
+  .google-badge.disconnected {
+    color: var(--warning);
+    border-color: #5a4a20;
+    background: #1a1408;
+    cursor: pointer;
+  }
+  .google-badge .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+ 
+  .clear-btn {
+    font-size: 12px;
+    font-family: 'Instrument Sans', sans-serif;
+    color: var(--muted);
+    background: none;
+    border: 1px solid var(--border2);
+    padding: 5px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .clear-btn:hover { color: var(--text); border-color: var(--faint); }
+ 
+  .skills-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 24px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    flex-wrap: wrap;
+  }
+  .skills-label {
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    color: var(--faint);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-right: 4px;
+  }
+  .skill-chip {
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    color: var(--muted);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 3px 9px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .skill-chip:hover { color: var(--accent); border-color: var(--accent-dim); background: var(--accent-bg); }
+ 
+  #chat {
+    flex: 1;
+    overflow-y: auto;
+    padding: 28px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+ 
+  .message-row {
+    display: flex;
+    padding: 6px 28px;
+    gap: 14px;
+    max-width: 860px;
+    width: 100%;
+    margin: 0 auto;
+  }
+ 
+  .avatar {
+    width: 28px; height: 28px;
+    border-radius: 7px;
+    flex-shrink: 0;
+    margin-top: 2px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+    font-family: 'DM Serif Display', serif;
+  }
+  .avatar.agent { background: var(--accent-bg); border: 1px solid var(--accent-dim); color: var(--accent); }
+  .avatar.user { background: var(--user-bg); border: 1px solid var(--user-border); color: #6a8acc; font-family: 'Instrument Sans', sans-serif; font-size: 11px; font-weight: 600; }
+ 
+  .bubble { flex: 1; font-size: 14.5px; line-height: 1.75; color: var(--text); padding-top: 3px; }
+  .bubble.user { color: #c5cfe8; }
+  .bubble p { margin-bottom: 0.6em; }
+  .bubble p:last-child { margin-bottom: 0; }
+  .bubble strong { color: var(--accent); font-weight: 500; }
+  .bubble em { color: var(--muted); font-style: italic; }
+  .bubble code { font-family: 'DM Mono', monospace; font-size: 12.5px; background: var(--surface2); border: 1px solid var(--border); padding: 1px 6px; border-radius: 4px; color: #a8d8a8; }
+  .bubble pre { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px 16px; overflow-x: auto; margin: 10px 0; }
+  .bubble pre code { background: none; border: none; padding: 0; }
+  .bubble ul, .bubble ol { padding-left: 20px; margin: 8px 0; }
+  .bubble li { margin-bottom: 4px; }
+  .bubble h3 { font-size: 14px; font-weight: 600; color: var(--accent); margin: 14px 0 6px; font-family: 'DM Serif Display', serif; }
+ 
+  /* Tool activity indicator */
+  .tool-activity {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin-bottom: 8px;
+    font-size: 12px;
+    font-family: 'DM Mono', monospace;
+    color: var(--muted);
+    width: fit-content;
+  }
+  .tool-activity .spinner {
+    width: 10px; height: 10px;
+    border: 1.5px solid var(--faint);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    flex-shrink: 0;
+  }
+  .tool-activity.done { color: var(--success); border-color: #2a5a3a; }
+  .tool-activity.done .spinner { display: none; }
+  .tool-activity.done::before { content: '✓'; font-size: 11px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+ 
+  .typing-indicator { display: flex; gap: 4px; align-items: center; padding-top: 6px; }
+  .typing-indicator span { width: 6px; height: 6px; border-radius: 50%; background: var(--faint); animation: pulse 1.2s ease-in-out infinite; }
+  .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+  .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes pulse { 0%, 60%, 100% { opacity: 0.3; transform: scale(1); } 30% { opacity: 1; transform: scale(1.3); } }
+ 
+  .welcome { max-width: 860px; margin: 20px auto 10px; padding: 0 28px; width: 100%; }
+  .welcome-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 24px; }
+  .welcome-title { font-family: 'DM Serif Display', serif; font-size: 20px; margin-bottom: 6px; }
+  .welcome-sub { font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 16px; }
+  .starter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .starter-btn { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px; text-align: left; cursor: pointer; transition: all 0.15s; color: var(--muted); font-size: 12.5px; font-family: 'Instrument Sans', sans-serif; line-height: 1.4; }
+  .starter-btn:hover { border-color: var(--accent-dim); color: var(--text); background: var(--accent-bg); }
+  .starter-icon { font-size: 14px; margin-bottom: 4px; display: block; }
+ 
+  footer { padding: 16px 24px 20px; background: var(--surface); border-top: 1px solid var(--border); flex-shrink: 0; }
+  .input-wrap { max-width: 860px; margin: 0 auto; display: flex; align-items: flex-end; gap: 10px; background: var(--surface2); border: 1px solid var(--border2); border-radius: var(--radius); padding: 10px 12px; transition: border-color 0.15s; }
+  .input-wrap:focus-within { border-color: var(--accent-dim); }
+  #userInput { flex: 1; background: none; border: none; outline: none; color: var(--text); font-size: 14px; font-family: 'Instrument Sans', sans-serif; resize: none; line-height: 1.5; max-height: 180px; overflow-y: auto; scrollbar-width: none; }
+  #userInput::placeholder { color: var(--faint); }
+  #sendBtn { width: 32px; height: 32px; background: var(--accent); border: none; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; color: #0e0e0f; }
+  #sendBtn:hover { background: #d4b87e; transform: scale(1.05); }
+  #sendBtn:disabled { background: var(--faint); cursor: not-allowed; transform: none; }
+  .input-hint { text-align: center; font-size: 11px; color: var(--faint); margin-top: 8px; font-family: 'DM Mono', monospace; }
+ 
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+ 
+<header>
+  <div class="logo">
+    <div class="logo-mark">O</div>
+    <span class="logo-text">OpenClaw</span>
+  </div>
+  <div class="profession-tag" id="professionTag">Connecting...</div>
+  <div class="header-right">
+    <div class="google-badge disconnected" id="googleBadge" onclick="connectGoogle()">
+      <div class="dot"></div>
+      <span id="googleLabel">Google: not connected</span>
+    </div>
+    <button class="clear-btn" onclick="clearChat()">Clear chat</button>
+  </div>
+</header>
+ 
+<div class="skills-bar">
+  <span class="skills-label">Quick skills</span>
+  <div id="skillChips"></div>
+</div>
+ 
+<div id="chat">
+  <div class="welcome" id="welcomeSection">
+    <div class="welcome-card">
+      <div class="welcome-title" id="welcomeTitle">Good morning.</div>
+      <div class="welcome-sub" id="welcomeSub">Your agent is ready.</div>
+      <div class="starter-grid" id="starterGrid"></div>
+    </div>
+  </div>
+</div>
+ 
+<footer>
+  <div class="input-wrap">
+    <textarea id="userInput" rows="1" placeholder="Ask your agent anything..."></textarea>
+    <button id="sendBtn" onclick="sendMessage()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="22" y1="2" x2="11" y2="13"></line>
+        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+      </svg>
+    </button>
+  </div>
+  <div class="input-hint">↵ send &nbsp;·&nbsp; shift+↵ new line</div>
+</footer>
+ 
+<script>
+const PROFESSION_UI = {
+  banker: {
+    label: 'Commercial Banker',
+    tagline: 'Banking intelligence — with access to your Gmail and Drive.',
+    skills: ['Credit memo','Risk analysis','Search emails','Find deal docs','Term sheet','Draft client email'],
+    skillPrompts: [
+      'Help me draft a credit memo for a new loan opportunity.',
+      'Walk me through a credit risk analysis for a middle-market borrower.',
+      'Search my Gmail for recent emails about loan renewals.',
+      'Search my Drive for financial models or deal documents.',
+      'Draft a term sheet outline for a senior secured revolving credit facility.',
+      'Help me draft a professional email to a commercial banking client.'
+    ],
+    starters: [
+      { icon: '📧', label: 'Check recent emails', prompt: 'Show me my most recent unread emails.' },
+      { icon: '📋', label: 'Draft credit memo', prompt: 'Help me draft a credit memo for a new loan.' },
+      { icon: '📁', label: 'Find a document', prompt: 'Search my Drive for recent financial models.' },
+      { icon: '⚖️', label: 'Regulatory check', prompt: 'What key regulatory considerations should I flag for a new credit?' }
+    ]
+  },
+  landlord: {
+    label: 'CRE Landlord',
+    tagline: 'Real estate intelligence — with access to your Gmail and Drive.',
+    skills: ['Search lease files','Tenant emails','NOI analysis','Find rent comps','Draft LOI','Renewal letter'],
+    skillPrompts: [
+      'Search my Drive for lease documents.',
+      'Search my Gmail for recent tenant emails.',
+      'Help me calculate and analyze NOI for a property.',
+      'Search my Drive for rent comparable analyses.',
+      'Draft a Letter of Intent for a new commercial lease.',
+      'Draft a lease renewal letter to a tenant.'
+    ],
+    starters: [
+      { icon: '📧', label: 'Check tenant emails', prompt: 'Show me recent emails from tenants.' },
+      { icon: '📄', label: 'Find a lease', prompt: 'Search my Drive for lease documents.' },
+      { icon: '💰', label: 'Run the numbers', prompt: 'Help me analyze NOI and returns for a property.' },
+      { icon: '✉️', label: 'Tenant letter', prompt: 'Draft a communication to a tenant.' }
+    ]
+  },
+  lawyer: {
+    label: 'Attorney',
+    tagline: 'Legal intelligence — with access to your Gmail and Drive.',
+    skills: ['Search case files','Client emails','Draft motion','Contract review','Find research','Draft demand'],
+    skillPrompts: [
+      'Search my Drive for case files or documents.',
+      'Search my Gmail for recent client emails.',
+      'Help me draft a motion.',
+      'I have a contract to review — help me identify risk provisions.',
+      'Search my Drive for legal research memos.',
+      'Draft a demand letter for a client matter.'
+    ],
+    starters: [
+      { icon: '📧', label: 'Check client emails', prompt: 'Show me my recent unread emails.' },
+      { icon: '📁', label: 'Find case files', prompt: 'Search my Drive for recent case documents.' },
+      { icon: '⚖️', label: 'Research issue', prompt: 'Help me analyze a legal question.' },
+      { icon: '📝', label: 'Draft document', prompt: 'I need to draft a legal document.' }
+    ]
+  }
+};
+ 
+let profession = 'banker';
+let messages = [];
+let ws;
+let currentAgentBubble = null;
+let currentToolsContainer = null;
+ 
+// ─── WebSocket ───────────────────────────────────────────────────
+function connectWS() {
+  ws = new WebSocket(`ws://localhost:3747/ws`);
+  ws.onmessage = handleWSMessage;
+  ws.onclose = () => setTimeout(connectWS, 2000);
+}
+ 
+function handleWSMessage(event) {
+  const chunk = JSON.parse(event.data);
+ 
+  if (chunk.type === 'tool_start' || chunk.type === 'tool_running') {
+    showToolActivity(chunk.toolName, false);
+  } else if (chunk.type === 'tool_done') {
+    markToolDone(chunk.toolName);
+  } else if (chunk.type === 'text') {
+    appendToAgentBubble(chunk.text);
+  } else if (chunk.type === 'done') {
+    finalizeAgentMessage();
+  } else if (chunk.type === 'error') {
+    appendToAgentBubble(`\n\nError: ${chunk.message}`);
+    finalizeAgentMessage();
+  }
+}
+ 
+// ─── Load config from server ─────────────────────────────────────
+async function loadConfig() {
+  const res = await fetch('/api/config');
+  const cfg = await res.json();
+  profession = cfg.profession;
+  const ui = PROFESSION_UI[profession];
+ 
+  document.getElementById('professionTag').textContent = ui.label;
+  document.title = `OpenClaw · ${ui.label}`;
+  document.getElementById('welcomeTitle').textContent = getGreeting();
+  document.getElementById('welcomeSub').textContent = ui.tagline;
+ 
+  // Google badge
+  const badge = document.getElementById('googleBadge');
+  const label = document.getElementById('googleLabel');
+  if (cfg.googleConnected) {
+    badge.className = 'google-badge connected';
+    label.textContent = 'Google connected';
+    badge.onclick = null;
+  } else {
+    badge.className = 'google-badge disconnected';
+    label.textContent = 'Google: click to connect';
+  }
+ 
+  // Skill chips
+  const chips = document.getElementById('skillChips');
+  ui.skills.forEach((s, i) => {
+    const chip = document.createElement('span');
+    chip.className = 'skill-chip';
+    chip.textContent = s;
+    chip.onclick = () => { setInput(ui.skillPrompts[i]); };
+    chips.appendChild(chip);
+  });
+ 
+  // Starters
+  const grid = document.getElementById('starterGrid');
+  ui.starters.forEach(s => {
+    const btn = document.createElement('button');
+    btn.className = 'starter-btn';
+    btn.innerHTML = `<span class="starter-icon">${s.icon}</span>${s.label}`;
+    btn.onclick = () => sendPrompt(s.prompt);
+    grid.appendChild(btn);
+  });
+}
+ 
+function connectGoogle() {
+  window.open('/oauth/start', '_blank', 'width=500,height=600');
+  setTimeout(loadConfig, 5000);
+}
+ 
+function getGreeting() {
+  const h = new Date().getHours();
+  if (h < 12) return 'Good morning.';
+  if (h < 17) return 'Good afternoon.';
+  return 'Good evening.';
+}
+ 
+// ─── Chat rendering ──────────────────────────────────────────────
+function hideWelcome() {
+  const w = document.getElementById('welcomeSection');
+  if (w) w.style.display = 'none';
+}
+ 
+function addUserMessage(text) {
+  hideWelcome();
+  const chat = document.getElementById('chat');
+  const row = document.createElement('div');
+  row.className = 'message-row';
+  row.innerHTML = `
+    <div class="avatar user">You</div>
+    <div class="bubble user">${escapeHtml(text)}</div>
+  `;
+  chat.appendChild(row);
+  chat.scrollTop = chat.scrollHeight;
+}
+ 
+function startAgentMessage() {
+  hideWelcome();
+  const chat = document.getElementById('chat');
+  const row = document.createElement('div');
+  row.className = 'message-row';
+  row.id = 'agentRow';
+ 
+  const avatar = document.createElement('div');
+  avatar.className = 'avatar agent';
+  avatar.textContent = 'O';
+ 
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+ 
+  currentToolsContainer = document.createElement('div');
+  bubble.appendChild(currentToolsContainer);
+ 
+  const textDiv = document.createElement('div');
+  textDiv.id = 'agentText';
+  bubble.appendChild(textDiv);
+  currentAgentBubble = textDiv;
+ 
+  row.appendChild(avatar);
+  row.appendChild(bubble);
+  chat.appendChild(row);
+  chat.scrollTop = chat.scrollHeight;
+}
+ 
+function showToolActivity(toolName, done) {
+  if (!currentToolsContainer) return;
+  const existing = document.getElementById(`tool-${toolName}`);
+  if (existing) return;
+ 
+  const labels = {
+    list_emails: 'Reading Gmail...',
+    read_email: 'Opening email...',
+    search_drive: 'Searching Drive...',
+    read_drive_file: 'Reading file...',
+    create_email_draft: 'Creating draft...'
+  };
+ 
+  const div = document.createElement('div');
+  div.className = 'tool-activity';
+  div.id = `tool-${toolName}`;
+  div.innerHTML = `<div class="spinner"></div><span>${labels[toolName] || toolName}</span>`;
+  currentToolsContainer.appendChild(div);
+  document.getElementById('chat').scrollTop = document.getElementById('chat').scrollHeight;
+}
+ 
+function markToolDone(toolName) {
+  const el = document.getElementById(`tool-${toolName}`);
+  if (el) {
+    el.className = 'tool-activity done';
+    const labels = {
+      list_emails: 'Gmail read',
+      read_email: 'Email opened',
+      search_drive: 'Drive searched',
+      read_drive_file: 'File read',
+      create_email_draft: 'Draft created'
+    };
+    el.querySelector('span').textContent = labels[toolName] || toolName;
+  }
+}
+ 
+let accumulatedText = '';
+function appendToAgentBubble(text) {
+  if (!currentAgentBubble) startAgentMessage();
+  accumulatedText += text;
+  currentAgentBubble.innerHTML = renderMarkdown(accumulatedText);
+  document.getElementById('chat').scrollTop = document.getElementById('chat').scrollHeight;
+}
+ 
+function finalizeAgentMessage() {
+  const assistantContent = accumulatedText;
+  messages.push({ role: 'assistant', content: assistantContent });
+  accumulatedText = '';
+  currentAgentBubble = null;
+  currentToolsContainer = null;
+  document.getElementById('sendBtn').disabled = false;
+  document.getElementById('userInput').focus();
+}
+ 
+// ─── Send ────────────────────────────────────────────────────────
+async function sendMessage() {
+  const input = document.getElementById('userInput');
+  const text = input.value.trim();
+  if (!text || !ws || ws.readyState !== WebSocket.OPEN) return;
+ 
+  input.value = '';
+  input.style.height = 'auto';
+  document.getElementById('sendBtn').disabled = true;
+ 
+  messages.push({ role: 'user', content: text });
+  addUserMessage(text);
+  startAgentMessage();
+ 
+  ws.send(JSON.stringify({ type: 'chat', messages }));
+}
+ 
+function sendPrompt(text) {
+  document.getElementById('userInput').value = text;
+  sendMessage();
+}
+ 
+function setInput(text) {
+  const input = document.getElementById('userInput');
+  input.value = text;
+  input.focus();
+  autoResize(input);
+}
+ 
+function clearChat() {
+  messages = [];
+  accumulatedText = '';
+  currentAgentBubble = null;
+  const chat = document.getElementById('chat');
+  chat.innerHTML = '';
+  const welcome = document.getElementById('welcomeSection');
+  chat.appendChild(welcome);
+  welcome.style.display = 'block';
+}
+ 
+// ─── Markdown & utils ─────────────────────────────────────────────
+function escapeHtml(t) {
+  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+ 
+function renderMarkdown(text) {
+  return text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/```(\w+)?\n([\s\S]*?)```/g,'<pre><code>$2</code></pre>')
+    .replace(/`([^`]+)`/g,'<code>$1</code>')
+    .replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*([^*]+)\*/g,'<em>$1</em>')
+    .replace(/^### (.+)$/gm,'<h3>$1</h3>')
+    .replace(/^## (.+)$/gm,'<h3>$1</h3>')
+    .replace(/^\- (.+)$/gm,'<li>$1</li>')
+    .replace(/(<li>.*<\/li>)/gs,'<ul>$1</ul>')
+    .replace(/\n\n/g,'</p><p>')
+    .replace(/^(?!<[huplbc])(.+)$/gm, m => m.startsWith('<') ? m : `<p>${m}</p>`)
+    .replace(/\n/g,'<br>');
+}
+ 
+const input = document.getElementById('userInput');
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 180) + 'px';
+}
+input.addEventListener('input', () => autoResize(input));
+input.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+});
+ 
+// ─── Init ────────────────────────────────────────────────────────
+loadConfig();
+connectWS();
+</script>
+</body>
+</html>
+ 
